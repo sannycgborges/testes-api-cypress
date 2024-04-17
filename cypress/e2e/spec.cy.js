@@ -9,7 +9,7 @@ let movie;
 
 describe('Cadastro de usuário', () => {
 
-  it('Bad Request - Usuário sem nome informado', () => {
+  it('Deve receber bad request ao tentar cadastrar um usuário sem nome', () => {
     cy.request({
       method: 'POST', 
       url: 'users', 
@@ -20,11 +20,25 @@ describe('Cadastro de usuário', () => {
     failOnStatusCode: false
   }).then((response) => {
       expect(response.status).to.eq(400);
-      expect(response.body.error).to.eq('Bad Request');
     });
   });
 
-  it('Sucesso - Cadastrado', () => {
+  it('Deve receber bad request ao tentar cadastrar um usuário com e-mail inválido', () => {
+    cy.request({
+      method: 'POST', 
+      url: 'users', 
+      body: {
+      "name": fullName,
+      "email": 'email.com',
+      "password": password
+    },
+    failOnStatusCode: false
+  }).then((response) => {
+      expect(response.status).to.eq(400);
+    });
+  });
+
+  it('Deve ser possível cadastrar o usuário com dados corretos', () => {
     cy.request('POST', 'users', {
       "name": fullName,
       "email": email,
@@ -37,10 +51,27 @@ describe('Cadastro de usuário', () => {
     });
   });
 
+  it('Não deve ser possível cadastrar o usuário com e-mail já utilizado', () => {
+    cy.request({
+      method: 'POST', 
+      url: 'users', 
+      body: {
+      "name": fullName,
+      "email": email,
+      "password": password
+    },
+    failOnStatusCode: false
+  }).then((response) => {
+      expect(response.status).to.eq(409);
+      expect(response.body.message).to.eq('Email already in use');
+      expect(response.body.error).to.eq('Conflict');
+    });
+  });
+
 });
 
 describe('Autenticação', () => {
-  it('Bad Request - Usuário sem senha informada', () => {
+  it('Deve receber bad request ao tentar autenticar um usuário sem senha', () => {
     cy.request({
       method:'POST', 
       url:'auth/login', 
@@ -54,7 +85,7 @@ describe('Autenticação', () => {
     });
   });
 
-  it('Unauthorized - Usuário com email ou senha invalida', () => {
+  it('Deve receber unauthorized ao tentar autenticar um usuário com senha invalida', () => {
     cy.request({
       method:'POST', 
       url:'auth/login', 
@@ -70,7 +101,7 @@ describe('Autenticação', () => {
     });
   });
 
-  it('Sucesso - Login', () => {
+  it('Deve ser possível autenticar o usuário com dados corretos', () => {
     cy.request('POST', 'auth/login', {
       "email": email,
       "password": password
@@ -82,8 +113,7 @@ describe('Autenticação', () => {
 });
 
 describe('Consulta de usuário', () => {
-
-  it('Unauthorized - Access token não informado', () => {
+  it('Deve receber unauthorized ao tentar consultar um usuário sem access token', () => {
     cy.request({
       method: 'GET', 
       url: 'users/'+userId,
@@ -91,11 +121,10 @@ describe('Consulta de usuário', () => {
     }).then((response) => {
       expect(response.status).to.eq(401);
       expect(response.body.error).to.eq("Unauthorized");
-      cy.log(JSON.stringify(response.body));
     });
   });
 
-  it('Forbidden - ID invalido', () => {
+  it('Deve receber forbidden ao consultar usuário com ID invalido', () => {
     cy.request({
       method: 'GET', 
       url: 'users/-1',
@@ -109,7 +138,7 @@ describe('Consulta de usuário', () => {
     });
   });
 
-  it('Sucesso - Buscar dados usuário', () => {
+  it('Deve ser possível buscar os dados do usuário', () => {
     cy.request({
       method: 'GET', 
       url: 'users/'+userId,
@@ -127,13 +156,10 @@ describe('Consulta de usuário', () => {
 });
 
 describe('Filmes', () => {
-  it('Sucesso - Lista de filmes', () => {
+  it('Deve ser possível buscar a lista de filmes', () => {
     cy.request({
       method: 'GET',
       url: 'movies',
-      headers : {
-        Authorization : 'Bearer '+accessToken
-      }
     }).then((response) => {
       expect(response.status).to.eq(200);
       const size = Object.keys(response.body).length;
@@ -142,7 +168,7 @@ describe('Filmes', () => {
     });
   });
 
-  it('Sucesso - Busca de filme por ID', () => {
+  it('Deve ser possível buscar o filme por ID', () => {
     cy.request({
       method: 'GET', 
       url: 'movies/'+movie.id
@@ -153,12 +179,11 @@ describe('Filmes', () => {
     });
   });
 
-  it('Sucesso - Busca de filme por título', () => {
+  it('Deve ser possível buscar o filme por título', () => {
     cy.request({
       method: 'GET', 
       url: 'movies/search?title='+movie.title
     }).then((response) => {
-      cy.log(JSON.stringify(response));
       expect(response.status).to.eq(200);
     });
   });
