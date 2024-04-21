@@ -54,6 +54,24 @@ describe('Rota de usuário /users', () => {
     })
   });
 
+  it('Deve receber um bad request ao criar uma review de filme', () =>{
+    cy.request({
+      method: 'POST',
+      url: 'users/review',
+      body: {
+        "movieId": '1234abcd',
+        "score": 5,
+        "reviewText": "xxxx",
+      },
+      headers: {
+        Authorization : 'Bearer '+_token
+      },
+      failOnStatusCode: false
+    }).then((response) => {
+      expect(response.status).to.eq(400);
+    })
+  });
+
   it('Deve procurar um filme', () => {
     cy.request({
       method: 'GET',
