@@ -159,12 +159,16 @@ describe('Filmes', () => {
   it('Deve ser possível buscar a lista de filmes', () => {
     cy.request({
       method: 'GET',
-      url: 'movies',
+      url: 'movies?sort=true',
     }).then((response) => {
       expect(response.status).to.eq(200);
-      const size = Object.keys(response.body).length;
-      const index = Math.floor(Math.random() * size) + 1;
-      movie = response.body[index];
+      response.body.filter((item) => {
+        if(item.totalRating != null) {
+          movie = item
+          return movie
+        }
+      });
+      expect(movie.totalRating).to.not.equal(null);
     });
   });
 
@@ -176,6 +180,9 @@ describe('Filmes', () => {
       expect(response.status).to.eq(200);
       expect(response.body.title).to.eq(movie.title);
       expect(response.body.genre).to.eq(movie.genre);
+      expect(response.body.reviews).to.not.equal(null);
+      expect(response.body.reviews[0].score).to.not.equal(null);
+      expect(response.body.reviews[0].score).to.be.within(0, 5);
     });
   });
 
